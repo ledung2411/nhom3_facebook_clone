@@ -27,7 +27,7 @@ class AccountScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundImage: AssetImage('assets/minhtu.jpg'), // Thay ảnh đại diện
+                    backgroundImage: const AssetImage('assets/minhtu.jpg'), // Thay ảnh đại diện
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -46,7 +46,6 @@ class AccountScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(Icons.notifications, size: 30),
                 ],
               ),
             ),
@@ -65,10 +64,11 @@ class AccountScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: Column(
                         children: [
-                          CircleAvatar(
+                          const CircleAvatar(
                             radius: 25,
-                            backgroundImage: AssetImage(
-                                'assets/facebook_logo.png'), // Thay ảnh shortcut
+                            backgroundImage:
+                            AssetImage('assets/facebook_logo.png'),
+
                           ),
                           const SizedBox(height: 5),
                           const Text(
@@ -114,30 +114,17 @@ class AccountScreen extends StatelessWidget {
             ),
 
             const Divider(),
-
-            // Phần cuối menu
-            ListTile(
-              leading: const Icon(Icons.help_outline),
-              title: const Text("Trợ giúp & hỗ trợ"),
-              onTap: () {
-                // Thêm chức năng
-              },
+            const ListTile(
+              leading: Icon(Icons.help_outline),
+              title: Text("Trợ giúp & hỗ trợ"),
             ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text("Cài đặt & quyền riêng tư"),
-              onTap: () {
-                // Thêm chức năng
-              },
-
+            const ListTile(
+              leading: Icon(Icons.settings),
+              title: Text("Cài đặt & quyền riêng tư"),
             ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text("Đăng Xuất"),
-              onTap: () {
-                // Thêm chức năng
-              },
-
+            const ListTile(
+              leading: Icon(Icons.logout),
+              title: Text("Đăng Xuất"),
             ),
           ],
         ),
