@@ -27,4 +27,8 @@ flutter:
 
   # Asset configuration
   assets:
-    - asset/    # Changed from asset\ to assets/
+    - assets/account_tab_logo.png
+    - assets/facebook_logo.png
+    - assets/home_tab_logo.png
+    - assets/market_tab_logo.png
+    - assets/video_tab_logo.png
