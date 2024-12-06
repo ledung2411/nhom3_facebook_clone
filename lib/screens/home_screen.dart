@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final Set<int> _likedPosts = {}; // Lưu trạng thái bài viết đã like
+  final TextEditingController _searchController = TextEditingController(); // Bộ lọc tìm kiếm
+  String _searchQuery = ''; // Nội dung tìm kiếm
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +45,7 @@ class HomeScreen extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.search, color: Colors.white),
                     onPressed: () {
-                      // Tìm kiếm
+                      _showSearchBar(context); // Mở thanh tìm kiếm
                     },
                   ),
                 ],
@@ -48,6 +57,13 @@ class HomeScreen extends StatelessWidget {
         body: ListView.builder(
           itemCount: 10, // Số bài đăng (ví dụ)
           itemBuilder: (context, index) {
+            // Kiểm tra bài viết có khớp với nội dung tìm kiếm
+            if (_searchQuery.isNotEmpty &&
+                !'This is the content of post #$index'
+                    .toLowerCase()
+                    .contains(_searchQuery.toLowerCase())) {
+              return const SizedBox.shrink();
+            }
             return _buildPost(context, index);
           },
         ),
@@ -103,9 +119,37 @@ class HomeScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _actionButton(Icons.thumb_up_alt_outlined, 'Like'),
-                _actionButton(Icons.comment_outlined, 'Comment'),
-                _actionButton(Icons.share_outlined, 'Share'),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (_likedPosts.contains(index)) {
+                        _likedPosts.remove(index);
+                      } else {
+                        _likedPosts.add(index);
+                      }
+                    });
+                  },
+                  child: _actionButton(
+                    Icons.thumb_up_alt_outlined,
+                    _likedPosts.contains(index) ? 'Liked' : 'Like',
+                    isActive: _likedPosts.contains(index),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    _showCommentDialog(context, index);
+                  },
+                  child: _actionButton(Icons.comment_outlined, 'Comment'),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    // Xử lý chia sẻ
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Post shared!'),
+                    ));
+                  },
+                  child: _actionButton(Icons.share_outlined, 'Share'),
+                ),
               ],
             ),
           ),
@@ -114,16 +158,80 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _actionButton(IconData icon, String label) {
+  Widget _actionButton(IconData icon, String label, {bool isActive = false}) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.grey[700]),
+        Icon(icon, size: 20, color: isActive ? Colors.blue : Colors.grey[700]),
         const SizedBox(width: 5),
         Text(
           label,
-          style: TextStyle(color: Colors.grey[700], fontSize: 14),
+          style: TextStyle(
+            color: isActive ? Colors.blue : Colors.grey[700],
+            fontSize: 14,
+          ),
         ),
       ],
+    );
+  }
+
+  void _showCommentDialog(BuildContext context, int index) {
+    final TextEditingController commentController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add Comment'),
+          content: TextField(
+            controller: commentController,
+            decoration: const InputDecoration(hintText: 'Write your comment...'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('Comment added: ${commentController.text}'),
+                ));
+              },
+              child: const Text('Post'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSearchBar(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Search Posts'),
+          content: TextField(
+            controller: _searchController,
+            decoration: const InputDecoration(hintText: 'Enter search query...'),
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
