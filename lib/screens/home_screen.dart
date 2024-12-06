@@ -9,8 +9,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final Set<int> _likedPosts = {}; // Lưu trạng thái bài viết đã like
-  final TextEditingController _searchController = TextEditingController(); // Bộ lọc tìm kiếm
-  String _searchQuery = ''; // Nội dung tìm kiếm
+  final Map<int, List<String>> _comments = {}; // Danh sách comment cho mỗi bài viết
 
   @override
   Widget build(BuildContext context) {
@@ -42,12 +41,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.search, color: Colors.white),
-                    onPressed: () {
-                      _showSearchBar(context); // Mở thanh tìm kiếm
-                    },
-                  ),
                 ],
               ),
               expandedHeight: 60,
@@ -57,13 +50,6 @@ class _HomeScreenState extends State<HomeScreen> {
         body: ListView.builder(
           itemCount: 10, // Số bài đăng (ví dụ)
           itemBuilder: (context, index) {
-            // Kiểm tra bài viết có khớp với nội dung tìm kiếm
-            if (_searchQuery.isNotEmpty &&
-                !'This is the content of post #$index'
-                    .toLowerCase()
-                    .contains(_searchQuery.toLowerCase())) {
-              return const SizedBox.shrink();
-            }
             return _buildPost(context, index);
           },
         ),
@@ -85,12 +71,6 @@ class _HomeScreenState extends State<HomeScreen> {
             title: Text('User $index',
                 style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: const Text('10 mins ago'),
-            trailing: IconButton(
-              icon: const Icon(Icons.more_horiz),
-              onPressed: () {
-                // Thêm menu hành động
-              },
-            ),
           ),
 
           // Phần nội dung bài đăng
@@ -137,13 +117,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 GestureDetector(
                   onTap: () {
-                    _showCommentDialog(context, index);
+                    _showCommentsBottomSheet(context, index);
                   },
                   child: _actionButton(Icons.comment_outlined, 'Comment'),
                 ),
                 GestureDetector(
                   onTap: () {
-                    // Xử lý chia sẻ
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       content: Text('Post shared!'),
                     ));
@@ -174,62 +153,77 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showCommentDialog(BuildContext context, int index) {
+  void _showCommentsBottomSheet(BuildContext context, int postIndex) {
     final TextEditingController commentController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Add Comment'),
-          content: TextField(
-            controller: commentController,
-            decoration: const InputDecoration(hintText: 'Write your comment...'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('Comment added: ${commentController.text}'),
-                ));
-              },
-              child: const Text('Post'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
-  void _showSearchBar(BuildContext context) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Search Posts'),
-          content: TextField(
-            controller: _searchController,
-            decoration: const InputDecoration(hintText: 'Enter search query...'),
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-              });
-            },
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Close'),
-            ),
-          ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text(
+                  'Comments',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              // Hiển thị danh sách comment
+              Expanded(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _comments[postIndex]?.length ?? 0,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      leading: const Icon(Icons.person),
+                      title: Text(_comments[postIndex]![index]),
+                    );
+                  },
+                ),
+              ),
+              // Input để thêm comment mới
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: commentController,
+                        decoration: const InputDecoration(
+                          hintText: 'Add a comment...',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.send),
+                      onPressed: () {
+                        setState(() {
+                          if (_comments[postIndex] == null) {
+                            _comments[postIndex] = [];
+                          }
+                          _comments[postIndex]!.add(commentController.text);
+                          commentController.clear();
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       },
     );

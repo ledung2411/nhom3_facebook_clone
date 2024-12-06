@@ -30,6 +30,9 @@ class _VideoListScreenState extends State<VideoListScreen> {
   late PageController _pageController;
   List<YoutubePlayerController> _controllers = [];
 
+  final Set<int> _likedVideos = {}; // Trạng thái video đã like
+  final Map<int, List<String>> _comments = {}; // Danh sách comment theo video
+
   @override
   void initState() {
     super.initState();
@@ -113,20 +116,35 @@ class _VideoListScreenState extends State<VideoListScreen> {
                   child: Column(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.thumb_up, color: Colors.white),
-                        onPressed: () {},
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.thumb_down, color: Colors.white),
-                        onPressed: () {},
+                        icon: Icon(
+                          _likedVideos.contains(index)
+                              ? Icons.thumb_up
+                              : Icons.thumb_up_outlined,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            if (_likedVideos.contains(index)) {
+                              _likedVideos.remove(index);
+                            } else {
+                              _likedVideos.add(index);
+                            }
+                          });
+                        },
                       ),
                       IconButton(
                         icon: const Icon(Icons.comment, color: Colors.white),
-                        onPressed: () {},
+                        onPressed: () {
+                          _showCommentsBottomSheet(context, index);
+                        },
                       ),
                       IconButton(
                         icon: const Icon(Icons.share, color: Colors.white),
-                        onPressed: () {},
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text('Video shared!'),
+                          ));
+                        },
                       ),
                     ],
                   ),
@@ -150,6 +168,82 @@ class _VideoListScreenState extends State<VideoListScreen> {
           );
         },
       ),
+    );
+  }
+
+  void _showCommentsBottomSheet(BuildContext context, int videoIndex) {
+    final TextEditingController commentController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text(
+                  'Comments',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              // Hiển thị danh sách comment
+              Expanded(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _comments[videoIndex]?.length ?? 0,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      leading: const Icon(Icons.person),
+                      title: Text(_comments[videoIndex]![index]),
+                    );
+                  },
+                ),
+              ),
+              // Input để thêm comment mới
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: commentController,
+                        decoration: const InputDecoration(
+                          hintText: 'Add a comment...',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.send),
+                      onPressed: () {
+                        setState(() {
+                          if (_comments[videoIndex] == null) {
+                            _comments[videoIndex] = [];
+                          }
+                          _comments[videoIndex]!.add(commentController.text);
+                          commentController.clear();
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
