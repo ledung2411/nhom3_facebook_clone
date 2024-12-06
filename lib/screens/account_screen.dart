@@ -68,6 +68,7 @@ class AccountScreen extends StatelessWidget {
                             radius: 25,
                             backgroundImage:
                             AssetImage('assets/facebook_logo.png'),
+
                           ),
                           const SizedBox(height: 5),
                           const Text(
@@ -113,8 +114,6 @@ class AccountScreen extends StatelessWidget {
             ),
 
             const Divider(),
-
-            // Phần cuối menu
             const ListTile(
               leading: Icon(Icons.help_outline),
               title: Text("Trợ giúp & hỗ trợ"),
