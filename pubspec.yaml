@@ -14,7 +14,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  video_player: ^2.5.0 # Thêm thư viện video_player để sử dụng trong dự án
+  youtube_player_flutter: ^9.1.1
 
 dev_dependencies:
   flutter_test:
@@ -25,7 +25,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # Nếu bạn có sử dụng tài sản (assets) trong ứng dụng, khai báo chúng tại đây.
+  # Asset configuration
   assets:
-    - assets\
-
+    - asset/    # Changed from asset\ to assets/

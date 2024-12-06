@@ -1,6 +1,7 @@
+// In main_screen.dart:
+import 'package:bt_nhom3/screens/video_screen.dart';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
-import 'video_screen.dart';  // Import VideoScreen
 import 'account_screen.dart';
 import 'market_screen.dart';
 
@@ -14,70 +15,71 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<String> _videoAssets = [
-    'assets/sample_video.mp4',
-    'assets/sample_video.mp4',
-    'assets/sample_video.mp4',
-    'assets/sample_video.mp4',
-  ];
-
-  // List of screens (you might need to modify this based on your logic)
+  // Simplified screens list without video assets
   final List<Widget> _screens = [
     const HomeScreen(),
-    // Modify this to use VideoScreen and pass a video asset
-    const VideoScreen(videoAsset: 'assets/sample_video.mp4'),
+    const VideoListScreen(), // Using YouTube videos instead of local assets
     const AccountScreen(),
     const MarketScreen(),
   ];
 
-  // Custom function to change the active and inactive colors for the BottomNavigationBar
   Color _getIconColor(int index) {
-    return _currentIndex == index ? Colors.blue : Colors.grey;
+    return _currentIndex == index ? Colors.blueAccent : Colors.grey;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Main Screen'),
+      body: IndexedStack(  // Using IndexedStack to preserve state
+        index: _currentIndex,
+        children: _screens,
       ),
-      body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-            if (index == 1) {  // If Video Screen is tapped, set the right video asset
-              // Use a sample asset or a dynamic asset depending on your logic
-              _screens[1] = VideoScreen(videoAsset: _videoAssets[index]);
-            }
-          });
-        },
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home, color: _getIconColor(0)),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.video_library, color: _getIconColor(1)),
-            label: 'Video',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle, color: _getIconColor(2)),
-            label: 'Account',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart, color: _getIconColor(3)),
-            label: 'Market',
-          ),
-        ],
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
-        elevation: 10,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 1,
+              blurRadius: 10,
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home, color: _getIconColor(0)),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.video_library, color: _getIconColor(1)),
+              label: 'Video',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.account_circle, color: _getIconColor(2)),
+              label: 'Account',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart, color: _getIconColor(3)),
+              label: 'Market',
+            ),
+          ],
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          selectedItemColor: Colors.blueAccent,
+          unselectedItemColor: Colors.grey,
+          selectedLabelStyle: const TextStyle(fontSize: 12),
+          unselectedLabelStyle: const TextStyle(fontSize: 12),
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          elevation: 0,
+        ),
       ),
     );
   }
 }
-
