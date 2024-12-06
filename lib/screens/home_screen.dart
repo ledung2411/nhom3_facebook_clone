@@ -10,6 +10,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final Set<int> _likedPosts = {}; // Lưu trạng thái bài viết đã like
   final Map<int, List<String>> _comments = {}; // Danh sách comment cho mỗi bài viết
+  final TextEditingController _searchController = TextEditingController(); // Bộ lọc tìm kiếm
+  String _searchQuery = ''; // Nội dung tìm kiếm
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +43,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.search, color: Colors.white),
+                    onPressed: () {
+                      _showSearchBar(context); // Mở thanh tìm kiếm
+                    },
+                  ),
                 ],
               ),
               expandedHeight: 60,
@@ -50,6 +58,13 @@ class _HomeScreenState extends State<HomeScreen> {
         body: ListView.builder(
           itemCount: 10, // Số bài đăng (ví dụ)
           itemBuilder: (context, index) {
+            // Lọc bài viết theo từ khóa tìm kiếm
+            if (_searchQuery.isNotEmpty &&
+                !'This is the content of post #$index'
+                    .toLowerCase()
+                    .contains(_searchQuery.toLowerCase())) {
+              return const SizedBox.shrink();
+            }
             return _buildPost(context, index);
           },
         ),
@@ -224,6 +239,34 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _showSearchBar(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Search Posts'),
+          content: TextField(
+            controller: _searchController,
+            decoration: const InputDecoration(hintText: 'Enter search query...'),
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Close'),
+            ),
+          ],
         );
       },
     );
