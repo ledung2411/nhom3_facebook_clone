@@ -19,6 +19,12 @@ class _MarketScreenState extends State<MarketScreen> {
     products = fetchProducts();
   }
 
+  void _refreshProducts() {
+    setState(() {
+      products = fetchProducts();
+    });
+  }
+
   void _showCreateProductModal(BuildContext context) {
     final nameController = TextEditingController();
     final priceController = TextEditingController();
@@ -75,9 +81,7 @@ class _MarketScreenState extends State<MarketScreen> {
                       description: description,
                     );
                     Navigator.pop(context);
-                    setState(() {
-                      products = fetchProducts(); // Refresh product list
-                    });
+                    _refreshProducts(); // Làm mới danh sách sản phẩm
                   } catch (e) {
                     print('Error creating product: $e');
                   }
@@ -149,9 +153,12 @@ class _MarketScreenState extends State<MarketScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => ProductDetailsScreen(
+              productId: product.id,
               productName: product.name,
               productPrice: product.price,
               productImage: product.image,
+              productDescription: product.description,
+              onProductChanged: _refreshProducts,
             ),
           ),
         );
