@@ -1,9 +1,7 @@
-import 'package:bt_nhom3/api/product_api.dart';
 import 'package:bt_nhom3/models/product_model.dart';
 import 'package:bt_nhom3/screens/market_detail_screen.dart';
 import 'package:flutter/material.dart';
-import 'dart:math';
-
+import 'package:bt_nhom3/api/product_api.dart';
 
 class MarketScreen extends StatefulWidget {
   const MarketScreen({super.key});
@@ -18,7 +16,81 @@ class _MarketScreenState extends State<MarketScreen> {
   @override
   void initState() {
     super.initState();
-    products = fetchProducts();  // Gọi API để lấy sản phẩm
+    products = fetchProducts();
+  }
+
+  void _showCreateProductModal(BuildContext context) {
+    final nameController = TextEditingController();
+    final priceController = TextEditingController();
+    final imageController = TextEditingController();
+    final descriptionController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Create Product'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                ),
+                TextField(
+                  controller: priceController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Price'),
+                ),
+                TextField(
+                  controller: imageController,
+                  decoration: const InputDecoration(labelText: 'Image URL'),
+                ),
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final name = nameController.text;
+                final price = double.tryParse(priceController.text) ?? 0;
+                final image = imageController.text;
+                final description = descriptionController.text;
+
+                if (name.isNotEmpty && image.isNotEmpty && description.isNotEmpty) {
+                  try {
+                    await createProduct(
+                      name: name,
+                      price: price,
+                      image: image,
+                      description: description,
+                    );
+                    Navigator.pop(context);
+                    setState(() {
+                      products = fetchProducts(); // Refresh product list
+                    });
+                  } catch (e) {
+                    print('Error creating product: $e');
+                  }
+                } else {
+                  print('All fields are required');
+                }
+              },
+              child: const Text('Create'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -31,14 +103,9 @@ class _MarketScreenState extends State<MarketScreen> {
         foregroundColor: Colors.black,
         actions: [
           IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
-            tooltip: 'Search',
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {},
-            tooltip: 'Notifications',
+            icon: const Icon(Icons.add),
+            onPressed: () => _showCreateProductModal(context),
+            tooltip: 'Add Product',
           ),
         ],
       ),
@@ -101,7 +168,7 @@ class _MarketScreenState extends State<MarketScreen> {
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
                 child: Image.network(
-                  product.image,  // Dùng hình ảnh từ API
+                  product.image,
                   fit: BoxFit.cover,
                   width: double.infinity,
                 ),

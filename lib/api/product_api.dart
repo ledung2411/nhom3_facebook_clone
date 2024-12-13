@@ -14,3 +14,26 @@ Future<List<Product>> fetchProducts() async {
     throw Exception('Failed to load products');
   }
 }
+Future<void> createProduct({
+  required String name,
+  required double price,
+  required String image,
+  required String description,
+}) async {
+  final url = Uri.parse('${Env.baseUrl}/ProductApi');
+  final headers = {'Content-Type': 'application/json'};
+  final body = jsonEncode({
+    'name': name,
+    'price': price,
+    'image': image,
+    'description': description,
+  });
+
+  final response = await http.post(url, headers: headers, body: body);
+
+  if (response.statusCode == 201) {
+    print('Product created successfully');
+  } else {
+    throw Exception('Failed to create product: ${response.statusCode}');
+  }
+}
