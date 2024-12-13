@@ -29,6 +29,7 @@ flutter:
 
   # Asset configuration
   assets:
+    - .env
     - assets/account_tab_logo.png
     - assets/facebook_logo.png
     - assets/home_tab_logo.png
