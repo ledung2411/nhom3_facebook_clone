@@ -12,6 +12,8 @@ class MarketScreen extends StatefulWidget {
 
 class _MarketScreenState extends State<MarketScreen> {
   late Future<List<Product>> products;
+  String searchKeyword = ''; // Lưu từ khóa tìm kiếm
+
 
   @override
   void initState() {
@@ -96,7 +98,16 @@ class _MarketScreenState extends State<MarketScreen> {
       },
     );
   }
-
+  void _searchProducts(String keyword) {
+    setState(() {
+      searchKeyword = keyword;
+      if (keyword.isEmpty) {
+        products = fetchProducts();
+      } else {
+        products = fetchProductsByKeyword(keyword);
+      }
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,6 +116,22 @@ class _MarketScreenState extends State<MarketScreen> {
         backgroundColor: Colors.white,
         elevation: 1,
         foregroundColor: Colors.black,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(50.0),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              onChanged: _searchProducts, // Gọi khi người dùng nhập từ khóa
+              decoration: InputDecoration(
+                hintText: 'Search products...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -126,7 +153,6 @@ class _MarketScreenState extends State<MarketScreen> {
               return const Center(child: Text('No products found.'));
             } else {
               final productList = snapshot.data!;
-
               return GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,

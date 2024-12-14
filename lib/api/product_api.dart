@@ -86,3 +86,16 @@ Future<void> deleteProduct(int id) async {
     throw Exception('Failed to delete product: ${response.statusCode}');
   }
 }
+// API để tìm kiếm sản phẩm
+Future<List<Product>> fetchProductsByKeyword(String keyword) async {
+  final response = await http.get(
+    Uri.parse('${Env.baseUrl}/ProductApi/search?keyword=$keyword'),
+  );
+
+  if (response.statusCode == 200) {
+    List<dynamic> data = json.decode(response.body);
+    return data.map((json) => Product.fromJson(json)).toList();
+  } else {
+    throw Exception('Failed to search products with keyword: $keyword');
+  }
+}

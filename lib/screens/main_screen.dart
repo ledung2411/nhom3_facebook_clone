@@ -13,23 +13,21 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0; // Tab hiện tại
-
-  // Danh sách màn hình
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const VideoListScreen(),
-    const NotificationsScreen(),
-    const AccountScreen(),
-    const MarketScreen(),
-  ];
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex, // Dùng IndexedStack để giữ trạng thái
-        children: _screens,
+      body: _currentIndex == 4
+          ? MarketScreen() // Tải lại MarketScreen khi bấm vào tab
+          : IndexedStack(
+        index: _currentIndex,
+        children: const [
+          HomeScreen(),
+          VideoListScreen(),
+          NotificationsScreen(),
+          AccountScreen(),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -38,7 +36,7 @@ class _MainScreenState extends State<MainScreen> {
             _currentIndex = index;
           });
         },
-        type: BottomNavigationBarType.fixed, // Hiển thị tối đa 5 mục
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -69,3 +67,4 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
+
