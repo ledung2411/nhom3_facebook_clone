@@ -1,111 +1,113 @@
-// import 'package:flutter/material.dart';
-// import 'dart:math';
-//
-// class MarketScreen extends StatelessWidget {
-//   const MarketScreen({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Marketplace'),
-//         backgroundColor: Colors.white,
-//         elevation: 1,
-//         foregroundColor: Colors.black,
-//         actions: [
-//           IconButton(
-//             icon: const Icon(Icons.search),
-//             onPressed: () {},
-//             tooltip: 'Search',
-//           ),
-//           IconButton(
-//             icon: const Icon(Icons.notifications),
-//             onPressed: () {},
-//             tooltip: 'Notifications',
-//           ),
-//         ],
-//       ),
-//       body: Padding(
-//         padding: const EdgeInsets.all(8.0),
-//         child: GridView.builder(
-//           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-//             crossAxisCount: 2,
-//             crossAxisSpacing: 8,
-//             mainAxisSpacing: 8,
-//             childAspectRatio: 3 / 4,
-//           ),
-//           itemCount: 10, // Example: 10 items
-//           itemBuilder: (context, index) {
-//             return _buildProductCard(context, index);
-//           },
-//         ),
-//       ),
-//     );
-//   }
-//
-//   Widget _buildProductCard(BuildContext context, int index) {
-//     final randomPrice = Random().nextInt(99990) + 10; // Random price between 10 and 99999
-//
-//     return GestureDetector(
-//       onTap: () {
-//         // Navigate to product details
-//       },
-//       child: Card(
-//         shape: RoundedRectangleBorder(
-//           borderRadius: BorderRadius.circular(10),
-//         ),
-//         elevation: 3,
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Expanded(
-//               child: ClipRRect(
-//                 borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-//                 child: Image.asset(
-//                   'assets/facebook_logo.png', // Placeholder image
-//                   fit: BoxFit.cover,
-//                   width: double.infinity,
-//                 ),
-//               ),
-//             ),
-//             Padding(
-//               padding: const EdgeInsets.all(8.0),
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Text(
-//                     'Product Name ${index + 1}',
-//                     style: const TextStyle(
-//                       fontWeight: FontWeight.bold,
-//                       fontSize: 16,
-//                     ),
-//                     maxLines: 1,
-//                     overflow: TextOverflow.ellipsis,
-//                   ),
-//                   const SizedBox(height: 4),
-//                   Text(
-//                     '\$${randomPrice}',
-//                     style: const TextStyle(
-//                       color: Colors.green,
-//                       fontSize: 14,
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
+import 'package:bt_nhom3/models/product_model.dart';
+import 'package:bt_nhom3/screens/market_detail_screen.dart';
 import 'package:flutter/material.dart';
-import 'dart:math';
+import 'package:bt_nhom3/api/product_api.dart';
 
-class MarketScreen extends StatelessWidget {
+class MarketScreen extends StatefulWidget {
   const MarketScreen({super.key});
 
+  @override
+  _MarketScreenState createState() => _MarketScreenState();
+}
+
+class _MarketScreenState extends State<MarketScreen> {
+  late Future<List<Product>> products;
+  String searchKeyword = ''; // Lưu từ khóa tìm kiếm
+
+
+  @override
+  void initState() {
+    super.initState();
+    products = fetchProducts();
+  }
+
+  void _refreshProducts() {
+    setState(() {
+      products = fetchProducts();
+    });
+  }
+
+  void _showCreateProductModal(BuildContext context) {
+    final nameController = TextEditingController();
+    final priceController = TextEditingController();
+    final imageController = TextEditingController();
+    final descriptionController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Create Product'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                ),
+                TextField(
+                  controller: priceController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Price'),
+                ),
+                TextField(
+                  controller: imageController,
+                  decoration: const InputDecoration(labelText: 'Image URL'),
+                ),
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final name = nameController.text;
+                final price = double.tryParse(priceController.text) ?? 0;
+                final image = imageController.text;
+                final description = descriptionController.text;
+
+                if (name.isNotEmpty && image.isNotEmpty && description.isNotEmpty) {
+                  try {
+                    await createProduct(
+                      name: name,
+                      price: price,
+                      image: image,
+                      description: description,
+                    );
+                    Navigator.pop(context);
+                    _refreshProducts(); // Làm mới danh sách sản phẩm
+                  } catch (e) {
+                    print('Error creating product: $e');
+                  }
+                } else {
+                  print('All fields are required');
+                }
+              },
+              child: const Text('Create'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  void _searchProducts(String keyword) {
+    setState(() {
+      searchKeyword = keyword;
+      if (keyword.isEmpty) {
+        products = fetchProducts();
+      } else {
+        products = fetchProductsByKeyword(keyword);
+      }
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,49 +116,75 @@ class MarketScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 1,
         foregroundColor: Colors.black,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(50.0),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              onChanged: _searchProducts, // Gọi khi người dùng nhập từ khóa
+              decoration: InputDecoration(
+                hintText: 'Search products...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
-            tooltip: 'Search',
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {},
-            tooltip: 'Notifications',
+            icon: const Icon(Icons.add),
+            onPressed: () => _showCreateProductModal(context),
+            tooltip: 'Add Product',
           ),
         ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: 3 / 4,
-          ),
-          itemCount: 10, // Example: 10 items
-          itemBuilder: (context, index) {
-            return _buildProductCard(context, index);
+        child: FutureBuilder<List<Product>>(
+          future: products,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('No products found.'));
+            } else {
+              final productList = snapshot.data!;
+              return GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 3 / 4,
+                ),
+                itemCount: productList.length,
+                itemBuilder: (context, index) {
+                  return _buildProductCard(context, productList[index]);
+                },
+              );
+            }
           },
         ),
       ),
     );
   }
 
-  Widget _buildProductCard(BuildContext context, int index) {
-    final randomPrice = Random().nextInt(99990) + 10; // Random price between 10 and 99999
-
+  Widget _buildProductCard(BuildContext context, Product product) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ProductDetailsScreen(
-              productName: 'Product Name ${index + 1}',
-              productPrice: randomPrice,
-              productImage: 'https://via.placeholder.com/150',
+              productId: product.id,
+              productName: product.name,
+              productPrice: product.price,
+              productImage: product.image,
+              productDescription: product.description,
+              onProductChanged: _refreshProducts,
             ),
           ),
         );
@@ -172,8 +200,8 @@ class MarketScreen extends StatelessWidget {
             Expanded(
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                child: Image.asset(
-                  'assets/facebook_logo.png', // Placeholder image
+                child: Image.network(
+                  product.image,
                   fit: BoxFit.cover,
                   width: double.infinity,
                 ),
@@ -185,7 +213,7 @@ class MarketScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Product Name ${index + 1}',
+                    product.name,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -195,7 +223,7 @@ class MarketScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '\$${randomPrice}',
+                    '\$${product.price}',
                     style: const TextStyle(
                       color: Colors.green,
                       fontSize: 14,
@@ -210,65 +238,3 @@ class MarketScreen extends StatelessWidget {
     );
   }
 }
-
-class ProductDetailsScreen extends StatelessWidget {
-  final String productName;
-  final int productPrice;
-  final String productImage;
-
-  const ProductDetailsScreen({
-    super.key,
-    required this.productName,
-    required this.productPrice,
-    required this.productImage,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(productName),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Image.asset(
-                'assets/facebook_logo.png',
-                height: 200,
-                width: 200,
-                fit: BoxFit.cover,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              productName,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 24,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '\$${productPrice}',
-              style: const TextStyle(
-                color: Colors.green,
-                fontSize: 20,
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'This is a placeholder description for the product. You can add more details about the product here.',
-              style: TextStyle(fontSize: 16),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-

@@ -15,6 +15,8 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   youtube_player_flutter: ^9.1.1
+  http: ^1.2.2
+  flutter_dotenv: ^5.2.1
 
 dev_dependencies:
   flutter_test:
@@ -27,6 +29,7 @@ flutter:
 
   # Asset configuration
   assets:
+    - .env
     - assets/account_tab_logo.png
     - assets/facebook_logo.png
     - assets/home_tab_logo.png
