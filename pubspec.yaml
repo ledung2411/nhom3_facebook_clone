@@ -11,6 +11,7 @@ environment:
 
 # Project dependencies
 dependencies:
+  uuid: ^3.0.7
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
