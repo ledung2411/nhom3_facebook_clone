@@ -265,31 +265,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(5.0),
-          child: Image.asset(
-            'assets/facebook_logo.png', // Đường dẫn tới biểu tượng Facebook
-            fit: BoxFit.contain,
-          ),
-        ),
-        title: const Text(
-          'Facebook',
-          style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Home'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () {
-              // Xử lý khi nhấn nút thêm
-            },
+            onPressed: _showCreatePostModal, // Show create post modal
           ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // Xử lý khi nhấn nút tìm kiếm
-            },
-          ),
-
         ],
       ),
       body: _isLoading
@@ -408,14 +389,11 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 10.0),
             child: Text(post.content),
           ),
-
           const SizedBox(height: 8),
           Padding(
-
             padding: const EdgeInsets.symmetric(horizontal: 10.0),
             child: Row(
               children: [
-
                 IconButton(
                   icon: Icon(
                     _likedPosts.contains(post.id)
@@ -429,11 +407,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 Text('${post.likesCount} Likes'),
                 const SizedBox(width: 16),
-                Container(
-                  width: 1,
-                  height: 24,
-                  color: Colors.grey, // Màu sắc của đường thẳng
-                ),
                 IconButton(
                   icon: const Icon(Icons.comment),
                   onPressed: () {
@@ -441,26 +414,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 Text('${post.commentsCount} Comments'),
-                const SizedBox(width: 16),
-                Container(
-                  width: 1,
-                  height: 24,
-                  color: Colors.grey, // Màu sắc của đường thẳng
-                ),
-                IconButton(
-                  icon: const Icon(Icons.share),
-                  onPressed: () {
-                    // Gọi hàm xử lý chia sẻ tại đây
-                  },
-
-                ),
-                const Text('Share'),
-
               ],
             ),
 
           ),
-
         ],
       ),
     );
