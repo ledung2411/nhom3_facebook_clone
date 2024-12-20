@@ -1,14 +1,16 @@
 import 'dart:convert';
 import 'package:bt_nhom3/env.dart';
+import 'package:bt_nhom3/api/api_client.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-
-
 
 class AuthService {
   // API login endpoint
   String get apiUrl => "${Env.baseUrl}/Authenticate/login";
+
+  // Secure Storage instance
+  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
   /// Method to handle user login
   ///
@@ -45,9 +47,8 @@ class AuthService {
         String token = data['token'];
         Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
 
-        // Save token in SharedPreferences
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('jwt_token', token);
+        // Save token in Secure Storage
+        await secureStorage.write(key: 'jwt_token', value: token);
 
         // Return success response
         return {
