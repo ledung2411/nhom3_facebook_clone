@@ -279,9 +279,8 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () {
-              // Xử lý khi nhấn nút thêm
-            },
+            tooltip: 'Create Post',
+            onPressed: _showCreatePostModal, // Show create post modal
           ),
           IconButton(
             icon: const Icon(Icons.search),
