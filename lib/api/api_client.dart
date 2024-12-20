@@ -145,7 +145,7 @@ class Auth {
 
     // Call API to register via ApiClient
     try {
-      var response = await _apiClient.post('Authenticate/register', body: body);
+      var response = await _apiClient.post('/Authenticate/register', body: body);
 
       // Handle API response
       if (response.statusCode == 200) {

@@ -1,7 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:bt_nhom3/screens/login_screen.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
+
+  Future<void> _logout(BuildContext context) async {
+    final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
+
+    // Clear token from secure storage
+    await secureStorage.delete(key: 'jwt_token');
+
+    // Navigate to login screen
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +84,6 @@ class AccountScreen extends StatelessWidget {
                             radius: 25,
                             backgroundImage:
                             AssetImage('assets/facebook_logo.png'),
-
                           ),
                           const SizedBox(height: 5),
                           const Text(
@@ -122,9 +137,10 @@ class AccountScreen extends StatelessWidget {
               leading: Icon(Icons.settings),
               title: Text("Cài đặt & quyền riêng tư"),
             ),
-            const ListTile(
-              leading: Icon(Icons.logout),
-              title: Text("Đăng Xuất"),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text("Đăng Xuất"),
+              onTap: () => _logout(context),
             ),
           ],
         ),
