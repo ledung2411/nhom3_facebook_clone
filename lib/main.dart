@@ -3,6 +3,7 @@ import 'env.dart';
 import 'screens/login_screen.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await Env.load();
   runApp(const MyApp());
 }
