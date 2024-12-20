@@ -11,6 +11,7 @@ environment:
 
 # Project dependencies
 dependencies:
+  uuid: ^3.0.7
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
@@ -36,3 +37,4 @@ flutter:
     - assets/market_tab_logo.png
     - assets/video_tab_logo.png
     - assets/minhtu.jpg
+    - assets/fb.png
