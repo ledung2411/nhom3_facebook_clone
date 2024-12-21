@@ -10,91 +10,66 @@ import 'package:bt_nhom3/screens/main_screen.dart';
 import 'package:bt_nhom3/screens/register_screen.dart';
 
 class AuthService {
-  // API login endpoint
-  String get apiUrl => "${Env.baseUrl}/Authenticate/login";
-
-  // Secure Storage instance
   final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
-  /// Method to handle user login
-  ///
-  /// Takes [username] and [password] as parameters.
-  /// Returns a map containing success status, token, and decoded token information on success, or an error message on failure.
   Future<Map<String, dynamic>> login(String username, String password) async {
     try {
-      // Send POST request to API
       final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        Uri.parse("${Env.baseUrl}/Authenticate/login"),
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "username": username,
           "password": password,
         }),
       );
 
-      // Check if response status is OK
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        // Check the status from the response
-        bool status = data['status'];
-        if (!status) {
-          return {
-            "success": false,
-            "message": data['message'],
-          };
+        if (!data['status']) {
+          return {"success": false, "message": data['message']};
         }
 
-        // Extract and decode the token
+        // Lưu Token
         String token = data['token'];
-        Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
-
-        // Save token in Secure Storage
         await secureStorage.write(key: 'jwt_token', value: token);
 
-        // Return success response
+        // Giải mã Token
+        Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+
         return {
           "success": true,
           "token": token,
           "decodedToken": decodedToken,
         };
       } else {
-        // Handle non-200 HTTP responses
         return {
           "success": false,
-          "message": "Failed to login: ${response.statusCode}",
+          "message": "Lỗi HTTP: ${response.statusCode}",
         };
       }
     } catch (e) {
-      // Handle any network or parsing errors
       return {
         "success": false,
-        "message": "Network error: $e",
+        "message": "Lỗi kết nối: $e",
       };
     }
   }
 
-  /// Method to retrieve JWT token from Secure Storage
   Future<String?> getToken() async {
     try {
       return await secureStorage.read(key: 'jwt_token');
     } catch (e) {
+      print("Lỗi đọc token: $e");
       return null;
     }
   }
 
-  /// Method to log out the user by clearing the stored token
   Future<void> logout() async {
-    try {
-      await secureStorage.delete(key: 'jwt_token');
-    } catch (e) {
-      // Handle storage deletion errors
-      rethrow;
-    }
+    await secureStorage.delete(key: 'jwt_token');
   }
 }
+
 
 class Auth {
   static final AuthService _authService = AuthService();
@@ -162,22 +137,44 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _checkToken(); // Check token on screen load
+    _checkToken(); // Check token and navigate to the correct screen on app load
   }
 
-  // Check token in SecureStorage
+  // Check token and role from SecureStorage
   Future<void> _checkToken() async {
     final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
-    String? token = await secureStorage.read(key: 'jwt_token');
-    if (token != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MainScreen()),
-      );
+
+    try {
+      String? token = await secureStorage.read(key: 'jwt_token');
+      if (token == null || token.isEmpty) {
+        print("Token không tồn tại hoặc rỗng.");
+        return;
+      }
+
+      // Giải mã Token
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      print("Token đã giải mã: $decodedToken");
+
+      String role = decodedToken['role']?.toLowerCase() ?? 'user';
+
+      // Điều hướng dựa trên vai trò
+      if (role == 'admin') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const AdminScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
+      }
+    } catch (e) {
+      print("Lỗi trong quá trình kiểm tra token: $e");
     }
   }
 
-  // Handle login
+
   Future<void> _handleLogin() async {
     if (_usernameController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -191,8 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    // Call Auth.login for authentication
-    Map<String, dynamic> result = await Auth.login(
+    final result = await Auth.login(
       _usernameController.text,
       _passwordController.text,
     );
@@ -200,14 +196,26 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (result['success'] == true) {
-      // Save token in SecureStorage
-      final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
-      await secureStorage.write(key: 'jwt_token', value: result['token']);
+      // Lưu Token
+      String token = result['token'];
+      Map<String, dynamic> decodedToken = result['decodedToken'];
 
-      String role = result['role'] ?? 'User'; // Default role is 'User'
+      // Kiểm tra giá trị của role
+      var roleField = decodedToken['role'];
+      String role;
 
-      // Navigate based on user role
-      if (role == 'Admin') {
+      if (roleField is String) {
+        role = roleField.toLowerCase(); // Nếu role là chuỗi
+      } else if (roleField is List) {
+        role = roleField.isNotEmpty ? roleField[0].toString().toLowerCase() : 'user';
+      } else {
+        role = 'user'; // Giá trị mặc định nếu không xác định được role
+      }
+
+      print('Role xác định: $role');
+
+      // Điều hướng dựa trên vai trò
+      if (role == 'admin') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const AdminScreen()),
@@ -219,16 +227,17 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } else {
-      // Show error message
-      String errorMessage = result['message'] ?? 'Tên đăng nhập hoặc mật khẩu không đúng';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(errorMessage),
+          content: Text(result['message'] ?? 'Tên đăng nhập hoặc mật khẩu không đúng'),
           backgroundColor: Colors.red,
         ),
       );
     }
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -352,3 +361,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
