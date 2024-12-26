@@ -1,24 +1,16 @@
 import 'dart:convert';
 import 'package:bt_nhom3/env.dart';
-import 'package:bt_nhom3/api/api_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
-class AuthService {
-  // API login endpoint
+// Đổi tên từ AuthService thành ApiAuthService
+class ApiAuthService {
   String get apiUrl => "${Env.baseUrl}/Authenticate/login";
-
-  // Secure Storage instance
   final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
-  /// Method to handle user login
-  ///
-  /// Takes [username] and [password] as parameters.
-  /// Returns a map containing success status, token, and decoded token information on success, or an error message on failure.
   Future<Map<String, dynamic>> login(String username, String password) async {
     try {
-      // Send POST request to API
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {
@@ -30,41 +22,33 @@ class AuthService {
         }),
       );
 
-      // Check if response status is OK
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        // Check the status from the response
-        bool status = data['status'];
-        if (!status) {
+        if (!data['status']) {
           return {
             "success": false,
             "message": data['message'],
           };
         }
 
-        // Extract and decode the token
         String token = data['token'];
         Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
 
-        // Save token in Secure Storage
         await secureStorage.write(key: 'jwt_token', value: token);
 
-        // Return success response
         return {
           "success": true,
           "token": token,
           "decodedToken": decodedToken,
         };
       } else {
-        // Handle non-200 HTTP responses
         return {
           "success": false,
           "message": "Failed to login: ${response.statusCode}",
         };
       }
     } catch (e) {
-      // Handle any network or parsing errors
       return {
         "success": false,
         "message": "Network error: $e",
@@ -117,16 +101,14 @@ class ApiClient {
 }
 
 class Auth {
-  static final AuthService _authService = AuthService();
+  static final ApiAuthService _authService = ApiAuthService();
   static final ApiClient _apiClient = ApiClient();
 
-  /// Login method using [AuthService]
   static Future<Map<String, dynamic>> login(String username, String password) async {
     var result = await _authService.login(username, password);
-    return result; // returns a map with {success: bool, token: string?, role: string?, message: string?}
+    return result;
   }
 
-  /// Register a new account
   static Future<Map<String, dynamic>> register({
     required String username,
     required String email,
@@ -134,7 +116,6 @@ class Auth {
     required String initials,
     required String role,
   }) async {
-    // Create request body
     Map<String, dynamic> body = {
       "username": username,
       "email": email,
@@ -143,11 +124,9 @@ class Auth {
       "role": role,
     };
 
-    // Call API to register via ApiClient
     try {
       var response = await _apiClient.post('/Authenticate/register', body: body);
 
-      // Handle API response
       if (response.statusCode == 200) {
         var result = jsonDecode(response.body);
         return result;
