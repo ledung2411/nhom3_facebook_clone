@@ -1,113 +1,249 @@
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class VideoListScreen extends StatefulWidget {
   const VideoListScreen({super.key});
 
   @override
-  _VideoListScreenState createState() => _VideoListScreenState();
+  State<VideoListScreen> createState() => _VideoListScreenState();
 }
 
 class _VideoListScreenState extends State<VideoListScreen> {
-  // Danh sách video (bao gồm tên video và đường dẫn đến tài nguyên)
-  final List<Map<String, String>> videos = [
-    {'title': 'Video 1', 'asset': 'assets/sample_video.mp4'},
-    {'title': 'Video 2', 'asset': 'assets/sample_video.mp4'},
-    {'title': 'Video 3', 'asset': 'assets/sample_video.mp4'},
-    {'title': 'Video 4', 'asset': 'assets/sample_video.mp4'},
-    // có thể thêm nhiều video ở đây
+  final List<Map<String, String>> videos = const [
+    {
+      'title': 'Winter Girl',
+      'id': 'Un62qURWp2U',
+      'thumbnail': 'https://img.youtube.com/vi/nPt8bK2gbaU/0.jpg',
+    },
+    {
+      'title': 'Qua trinh dien phan',
+      'id': 'ZvDF7_wksX8',
+      'thumbnail': 'https://img.youtube.com/vi/gQDByCdjUXw/0.jpg',
+    },
+    {
+      'title': 'Real Madrid',
+      'id': 'xfeBelVzEHQ',
+      'thumbnail': 'https://img.youtube.com/vi/iLnmTe5Q2Qw/0.jpg',
+    },
   ];
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Video List")),
-      body: ListView.builder(
-        itemCount: videos.length,
-        itemBuilder: (context, index) {
-          final video = videos[index];
+  late PageController _pageController;
+  List<YoutubePlayerController> _controllers = [];
 
-          return ListTile(
-            contentPadding: const EdgeInsets.all(8),
-            leading:const Icon(Icons.video_library, size: 40), // Thêm icon video
-            title: Text(video['title']!), // Tiêu đề video
-            onTap: () {
-              // Khi nhấn vào một video, chuyển đến màn hình video
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => VideoScreen(videoAsset: video['asset']!),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-class VideoScreen extends StatefulWidget {
-  final String videoAsset;
-
-  const VideoScreen({super.key, required this.videoAsset});
-
-  @override
-  _VideoScreenState createState() => _VideoScreenState();
-}
-
-class _VideoScreenState extends State<VideoScreen> {
-  late VideoPlayerController _controller;
+  final Set<int> _likedVideos = {}; // Trạng thái video đã like
+  final Map<int, List<String>> _comments = {}; // Danh sách comment theo video
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.asset(widget.videoAsset)
-      ..initialize().then((_) {
-        setState(() {});
-      });
+    _pageController = PageController();
+
+    // Khởi tạo controllers cho mỗi video
+    _controllers = videos.map((video) {
+      return YoutubePlayerController(
+        initialVideoId: video['id']!,
+        flags: const YoutubePlayerFlags(
+          autoPlay: false,
+          mute: false,
+          enableCaption: true,
+          loop: true,
+        ),
+      );
+    }).toList();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _pageController.dispose();
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Video: ${widget.videoAsset}")),
-      body: Center(
-        child: _controller.value.isInitialized
-            ? Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: MediaQuery.of(context).size.width * 0.9,
-              height: MediaQuery.of(context).size.width * 0.7,
-              child: AspectRatio(
-                aspectRatio: _controller.value.aspectRatio,
-                child: VideoPlayer(_controller),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _controller.value.isPlaying
-                      ? _controller.pause()
-                      : _controller.play();
-                });
-              },
-              child: Text(
-                _controller.value.isPlaying ? "Pause" : "Play",
-              ),
-            ),
-          ],
-        )
-            : const CircularProgressIndicator(),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          'Shorts',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
+      body: PageView.builder(
+        scrollDirection: Axis.vertical,
+        controller: _pageController,
+        itemCount: videos.length,
+        onPageChanged: (index) {
+          // Dừng video hiện tại khi chuyển trang
+          for (var controller in _controllers) {
+            controller.pause();
+          }
+          // Phát video mới
+          _controllers[index].play();
+        },
+        itemBuilder: (context, index) {
+          return Container(
+            color: Colors.black,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                YoutubePlayerBuilder(
+                  player: YoutubePlayer(
+                    controller: _controllers[index],
+                    showVideoProgressIndicator: true,
+                    progressIndicatorColor: Colors.red,
+                    progressColors: const ProgressBarColors(
+                      playedColor: Colors.red,
+                      handleColor: Colors.redAccent,
+                    ),
+                    aspectRatio: 9 / 16, // Tỷ lệ dọc cho Shorts
+                  ),
+                  builder: (context, player) {
+                    return player;
+                  },
+                ),
+                // Overlay controls
+                Positioned(
+                  right: 16,
+                  bottom: 100,
+                  child: Column(
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          _likedVideos.contains(index)
+                              ? Icons.thumb_up
+                              : Icons.thumb_up_outlined,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            if (_likedVideos.contains(index)) {
+                              _likedVideos.remove(index);
+                            } else {
+                              _likedVideos.add(index);
+                            }
+                          });
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.comment, color: Colors.white),
+                        onPressed: () {
+                          _showCommentsBottomSheet(context, index);
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.share, color: Colors.white),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text('Video shared!'),
+                          ));
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                // Video title and description
+                Positioned(
+                  left: 16,
+                  bottom: 50,
+                  right: 80,
+                  child: Text(
+                    videos[index]['title']!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showCommentsBottomSheet(BuildContext context, int videoIndex) {
+    final TextEditingController commentController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text(
+                  'Comments',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              // Hiển thị danh sách comment
+              Expanded(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _comments[videoIndex]?.length ?? 0,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      leading: const Icon(Icons.person),
+                      title: Text(_comments[videoIndex]![index]),
+                    );
+                  },
+                ),
+              ),
+              // Input để thêm comment mới
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: commentController,
+                        decoration: const InputDecoration(
+                          hintText: 'Add a comment...',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.send),
+                      onPressed: () {
+                        setState(() {
+                          if (_comments[videoIndex] == null) {
+                            _comments[videoIndex] = [];
+                          }
+                          _comments[videoIndex]!.add(commentController.text);
+                          commentController.clear();
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

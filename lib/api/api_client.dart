@@ -71,24 +71,48 @@ class AuthService {
       };
     }
   }
+}
 
-  /// Method to retrieve JWT token from Secure Storage
-  Future<String?> getToken() async {
-    try {
-      return await secureStorage.read(key: 'jwt_token');
-    } catch (e) {
-      return null;
-    }
+class ApiClient {
+  final String baseUrl;
+
+  ApiClient({String? baseUrl}) : baseUrl = baseUrl ?? Env.baseUrl;
+
+  Future<http.Response> get(String endpoint, {Map<String, String>? headers}) {
+    return http.get(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: _buildHeaders(headers),
+    );
   }
 
-  /// Method to log out the user by clearing the stored token
-  Future<void> logout() async {
-    try {
-      await secureStorage.delete(key: 'jwt_token');
-    } catch (e) {
-      // Handle storage deletion errors
-      rethrow;
-    }
+  Future<http.Response> post(String endpoint, {Map<String, String>? headers, dynamic body}) {
+    return http.post(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: _buildHeaders(headers),
+      body: jsonEncode(body),
+    );
+  }
+
+  Future<http.Response> put(String endpoint, {Map<String, String>? headers, dynamic body}) {
+    return http.put(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: _buildHeaders(headers),
+      body: jsonEncode(body),
+    );
+  }
+
+  Future<http.Response> delete(String endpoint, {Map<String, String>? headers}) {
+    return http.delete(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: _buildHeaders(headers),
+    );
+  }
+
+  Map<String, String> _buildHeaders(Map<String, String>? headers) {
+    return {
+      'Content-Type': 'application/json',
+      if (headers != null) ...headers,
+    };
   }
 }
 

@@ -1,81 +1,41 @@
-<<<<<<< Updated upstream
-import 'package:flutter/material.dart';
-=======
-// Part 1: Core definitions and methods
 import 'package:bt_nhom3/models/post_comment_model.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import '../api/post_api.dart';
-import '../models/post_model.dart';
+import '../api/post_api.dart'; // Ensure these methods are implemented properly in your API file
+import '../models/post_model.dart'; // Post model import
 import 'dart:convert';
->>>>>>> Stashed changes
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-<<<<<<< Updated upstream
-  Widget build(BuildContext context) {
-    return NestedScrollView(
-      headerSliverBuilder: (context, innerBoxIsScrolled) {
-        return [
-          SliverAppBar(
-            title:const Text("Home"),
-            floating: true,  // AppBar will appear when scrolling down.
-            pinned: true,    // Keep AppBar visible when scrolling up.
-            snap: true,      // Snap behavior when scrolling up/down.
-            expandedHeight: 200.0,
-            flexibleSpace: FlexibleSpaceBar(
-              title:const Text("Home"),
-              background: Image.asset(
-                'assets/home_tab_logo.png',  // Home tab logo
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-        ];
-      },
-      body: ListView.builder(
-        itemCount: 50,  // Example post count
-        itemBuilder: (context, index) {
-          return ListTile(
-            leading: const Icon(Icons.person),
-            title: Text('Post #$index'),
-            subtitle:const Text('This is a post description'),
-          );
-        },
-      ),
-    );
-  }
-}
-=======
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final Set<String> _likedPosts = {};
-  final Map<String, List<Comment>> _comments = {};
+  final Set<String> _likedPosts = {}; // Track liked posts
+  final Map<String, List<Comment>> _comments = {}; // Comments for each post
   final TextEditingController _searchController = TextEditingController();
-  final Uuid uuid = Uuid();
+  final Uuid uuid = Uuid(); // For generating GUID
   String _searchQuery = '';
   List<Post> _posts = [];
   bool _isLoading = true;
   String _errorMessage = '';
   bool _isProcessing = false;
-
   @override
   void initState() {
     super.initState();
     _fetchPosts();
   }
 
+  // Fetch posts from API
   Future<void> _fetchPosts() async {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
     try {
-      List<Post> posts = await fetchPosts();
+      List<Post> posts = await fetchPosts(); // Ensure this function fetches posts
       setState(() {
         _posts = posts;
       });
@@ -90,9 +50,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Fetch comments for a specific post
   Future<void> _fetchComments(String postId) async {
     try {
-      List<Comment> comments = await getCommentsByPost(postId);
+      List<Comment> comments = await getCommentsByPost(postId); // Ensure this function is implemented
       setState(() {
         _comments[postId] = comments;
       });
@@ -101,301 +62,229 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Show modal to create new post
   void _showCreatePostModal() {
-    final titleController = TextEditingController();
-    final contentController = TextEditingController();
-    final imageURLController = TextEditingController();
+    final TextEditingController _titleController = TextEditingController();
+    final TextEditingController _contentController = TextEditingController();
+    final TextEditingController _imageURLController = TextEditingController();
 
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          top: 20,
-          left: 20,
-          right: 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Create New Post',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 20),
-            TextField(
-              controller: titleController,
-              decoration: InputDecoration(
-                labelText: 'Title',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Create New Post'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _titleController,
+                  decoration: const InputDecoration(labelText: 'Title'),
                 ),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-            ),
-            SizedBox(height: 12),
-            TextField(
-              controller: contentController,
-              decoration: InputDecoration(
-                labelText: 'Content',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                TextField(
+                  controller: _contentController,
+                  decoration: const InputDecoration(labelText: 'Content'),
+                  maxLines: 3,
                 ),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              maxLines: 3,
-            ),
-            SizedBox(height: 12),
-            TextField(
-              controller: imageURLController,
-              decoration: InputDecoration(
-                labelText: 'Image URL',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                TextField(
+                  controller: _imageURLController,
+                  decoration: const InputDecoration(labelText: 'Image URL'),
                 ),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
+              ],
             ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
               onPressed: () async {
-                if (titleController.text.trim().isEmpty ||
-                    contentController.text.trim().isEmpty ||
-                    imageURLController.text.trim().isEmpty) {
+                if (_titleController.text.trim().isEmpty ||
+                    _contentController.text.trim().isEmpty ||
+                    _imageURLController.text.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Please fill all fields')),
+                    const SnackBar(
+                      content: Text('Title, Content, and Image URL cannot be empty'),
+                    ),
                   );
                   return;
                 }
 
                 final post = Post(
-                  id: uuid.v4(),
-                  title: titleController.text.trim(),
-                  content: contentController.text.trim(),
-                  imageURL: imageURLController.text.trim(),
+                  id: uuid.v4(), // Generate valid GUID
+                  title: _titleController.text.trim(),
+                  content: _contentController.text.trim(),
+                  imageURL: _imageURLController.text.trim(),
                   createdAt: DateTime.now().toIso8601String(),
-                  likesCount: 0,
-                  commentsCount: 0,
+                  likesCount: 0, // Default is 0 likes
+                  commentsCount: 0, // Default is 0 comments
                 );
 
                 try {
-                  await createPost(post);
-                  _fetchPosts();
+                  await createPost(post); // Ensure this function is implemented in your API
+                  _fetchPosts(); // Reload posts
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Post created successfully'),
-                      backgroundColor: Colors.green,
-                    ),
+                    const SnackBar(content: Text('Post created successfully')),
                   );
                 } catch (e) {
+                  print('Error creating post: $e');
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error creating post: $e'),
-                      backgroundColor: Colors.red,
-                    ),
+                    SnackBar(content: Text('Error creating post: $e')),
                   );
                 }
               },
-              child: Text('Create Post'),
+              child: const Text('Create'),
             ),
-            SizedBox(height: 20),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
   void _showAddCommentModal(String postId) {
-    final commentController = TextEditingController();
+    final TextEditingController _commentController = TextEditingController();
 
+    // Fetch comments before showing the modal
     _fetchComments(postId).then((_) {
-      showModalBottomSheet(
+      showDialog(
         context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        builder: (context) => StatefulBuilder(
-          builder: (context, setState) {
-            final comments = _comments[postId] ?? [];
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (BuildContext context, StateSetter modalSetState) {
+              // Get the list of comments, default to empty if null
+              final List<Comment> comments = _comments[postId] ?? [];
 
-            return Container(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-                top: 20,
-                left: 20,
-                right: 20,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Comments',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height * 0.4,
-                    ),
-                    child: comments.isEmpty
-                        ? Center(
-                      child: Text(
-                        'No comments yet',
-                        style: TextStyle(color: Colors.grey),
+              return AlertDialog(
+                title: const Text('Comments'),
+                content: Container(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Display comments
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: 200,
+                          minHeight: 50, // Minimum height
+                        ),
+                        child: comments.isNotEmpty
+                            ? ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: comments.length,
+                          itemBuilder: (context, index) {
+                            final comment = comments[index];
+                            return ListTile(
+                              title: Text(comment.text),
+                              subtitle: Text(_formatDate(comment.createdAt)),
+                            );
+                          },
+                        )
+                            : const Center(
+                          child: Text(
+                            'No comments yet',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
                       ),
-                    )
-                        : ListView.builder(
-                      itemCount: comments.length,
-                      itemBuilder: (context, index) {
-                        final comment = comments[index];
-                        return Card(
-                          child: ListTile(
-                            title: Text(comment.text),
-                            subtitle: Text(_formatDate(comment.createdAt)),
-                          ),
-                        );
-                      },
-                    ),
+                      const SizedBox(height: 16),
+
+                      // Comment input field
+                      TextField(
+                        controller: _commentController,
+                        decoration: const InputDecoration(
+                          labelText: 'Add a comment',
+                          border: OutlineInputBorder(),
+                        ),
+                        maxLines: 3,
+                      ),
+                    ],
                   ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: commentController,
-                            decoration: InputDecoration(
-                              hintText: 'Add a comment...',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        IconButton(
-                          icon: Icon(Icons.send),
-                          onPressed: () => _handleAddComment(
-                            postId,
-                            commentController,
-                            setState,
-                          ),
-                        ),
-                      ],
-                    ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      final commentText = _commentController.text.trim();
+                      if (commentText.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Comment cannot be empty')),
+                        );
+                        return;
+                      }
+
+                      final comment = Comment(
+                        id: uuid.v4(),
+                        postId: postId,
+                        text: commentText,
+                        createdAt: DateTime.now().toIso8601String(),
+                      );
+
+                      try {
+                        await addComment(comment); // Ensure this function is implemented
+
+                        // Fetch updated comments
+                        await _fetchComments(postId);
+
+                        // Clear the comment input
+                        _commentController.clear();
+
+                        // Update the modal's state to show new comments
+                        modalSetState(() {});
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Comment added successfully')),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error adding comment: $e')),
+                        );
+                      }
+                    },
+                    child: const Text('Add'),
                   ),
                 ],
-              ),
-            );
-          },
-        ),
+              );
+            },
+          );
+        },
       );
     });
   }
 
-  Future<void> _handleAddComment(
-      String postId,
-      TextEditingController controller,
-      StateSetter setState,
-      ) async {
-    final commentText = controller.text.trim();
-    if (commentText.isEmpty) return;
 
-    final comment = Comment(
-      id: uuid.v4(),
-      postId: postId,
-      text: commentText,
-      createdAt: DateTime.now().toIso8601String(),
-    );
-
-    try {
-      await addComment(comment);
-      controller.clear();
-      await _fetchComments(postId);
-      setState(() {});
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Comment added successfully'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error adding comment: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  String _formatDate(String isoDate) {
-    final date = DateTime.parse(isoDate);
-    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute}';
-  }// Part 2: UI Implementation
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        title: Text(
-          'Social Feed',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
-          ),
-        ),
+        title: const Text('Home'),
         actions: [
           IconButton(
-            icon: Icon(Icons.add_box_outlined, color: Colors.black87),
-            onPressed: _showCreatePostModal,
+            icon: const Icon(Icons.add),
+            onPressed: _showCreatePostModal, // Show create post modal
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _fetchPosts,
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage.isNotEmpty
-            ? Center(child: Text(_errorMessage))
-            : _posts.isEmpty
-            ? const Center(child: Text('No posts found'))
-            : ListView.builder(
-          itemCount: _posts.length,
-          itemBuilder: (context, index) {
-            final post = _posts[index];
-            return _buildPost(context, post);
-          },
-        ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage.isNotEmpty
+          ? Center(child: Text(_errorMessage))
+          : _posts.isEmpty
+          ? const Center(child: Text('No posts found'))
+          : ListView.builder(
+        itemCount: _posts.length,
+        itemBuilder: (context, index) {
+          final post = _posts[index];
+          return _buildPost(context, post);
+        },
       ),
     );
   }
@@ -403,35 +292,23 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildPost(BuildContext context, Post post) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      elevation: 2,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.blue[100],
-              child: Icon(Icons.person, color: Colors.blue),
+            leading: const CircleAvatar(
+              child: Icon(Icons.person),
             ),
-            title: Text(
-              post.title,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            subtitle: Text(
-              _formatDate(post.createdAt),
-              style: TextStyle(color: Colors.grey[600], fontSize: 13),
-            ),
+            title: Text(post.title,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text(_formatDate(post.createdAt)),
             trailing: IconButton(
               icon: Icon(
-                _likedPosts.contains(post.id)
-                    ? Icons.favorite
-                    : Icons.favorite_border,
+                _likedPosts.contains(post.id) ? Icons.favorite : Icons.favorite_border,
                 color: _likedPosts.contains(post.id) ? Colors.red : null,
               ),
               onPressed: () async {
-                if (_isProcessing) return;
+                if (_isProcessing) return; // Ngăn chặn việc nhấn liên tục
 
                 setState(() {
                   _isProcessing = true;
@@ -439,28 +316,38 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 try {
                   int updatedLikes;
+
+                  // Kiểm tra trạng thái Like hiện tại
                   if (_likedPosts.contains(post.id)) {
+                    // Nếu đã Like -> gửi yêu cầu Unlike
                     updatedLikes = await removeLike(post.id, 'userId');
                     setState(() {
                       _likedPosts.remove(post.id);
-                      post.likesCount = updatedLikes;
+                      post.likesCount = updatedLikes; // Cập nhật Like count
                     });
                   } else {
+                    // Nếu chưa Like -> gửi yêu cầu Like
                     try {
                       updatedLikes = await addLike(post.id, 'userId');
                       setState(() {
                         _likedPosts.add(post.id);
-                        post.likesCount = updatedLikes;
+                        post.likesCount = updatedLikes; // Cập nhật Like count
                       });
                     } catch (e) {
+                      // Kiểm tra nếu lỗi là 400 (bài đã được Like trước đó)
                       if (e.toString().contains('400')) {
-                        updatedLikes = await removeLike(post.id, 'userId');
+                        print('Post already liked. Auto-unlike.');
+                        updatedLikes = await removeLike(post.id, 'userId'); // Tự động Unlike
                         setState(() {
                           _likedPosts.remove(post.id);
-                          post.likesCount = updatedLikes;
+                          post.likesCount = updatedLikes; // Cập nhật Like count
                         });
                       } else {
-                        throw e;
+                        // Xử lý các lỗi khác
+                        print('Error updating like: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error updating like: $e')),
+                        );
                       }
                     }
                   }
@@ -471,135 +358,73 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 } finally {
                   setState(() {
-                    _isProcessing = false;
+                    _isProcessing = false; // Đặt lại trạng thái xử lý
                   });
                 }
               },
+
             ),
+
+
+
           ),
           if (post.imageURL.isNotEmpty)
-            Container(
-              width: double.infinity,
-              height: 250,
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10.0),
               child: Image.network(
                 post.imageURL,
                 fit: BoxFit.cover,
+                width: double.infinity,
+                height: 200, // Explicit height for image
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
                     height: 200,
-                    color: Colors.grey[200],
-                    child: Icon(
-                      Icons.image_not_supported,
-                      size: 50,
-                      color: Colors.grey[400],
-                    ),
+                    color: Colors.grey[300],
+                    child: const Center(child: Icon(Icons.image_not_supported)),
                   );
                 },
               ),
             ),
           Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(
-              post.content,
-              style: TextStyle(
-                fontSize: 15,
-                height: 1.4,
-                color: Colors.black87,
-              ),
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            child: Text(post.content),
           ),
           const SizedBox(height: 8),
-          Column(
-            children: [
-              Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  children: [
-                    _buildActionButton(
-                      icon: _likedPosts.contains(post.id)
-                          ? Icons.favorite
-                          : Icons.favorite_border,
-                      label: '${post.likesCount} Likes',
-                      color: _likedPosts.contains(post.id) ? Colors.red : Colors.grey[700],
-                      onPressed: () async {
-                        if (_isProcessing) return;
-                        setState(() {
-                          _isProcessing = true;
-                        });
-                        try {
-                          if (_likedPosts.contains(post.id)) {
-                            final updatedLikes = await removeLike(post.id, 'userId');
-                            setState(() {
-                              _likedPosts.remove(post.id);
-                              post.likesCount = updatedLikes;
-                            });
-                          } else {
-                            final updatedLikes = await addLike(post.id, 'userId');
-                            setState(() {
-                              _likedPosts.add(post.id);
-                              post.likesCount = updatedLikes;
-                            });
-                          }
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error updating like: $e')),
-                          );
-                        } finally {
-                          setState(() {
-                            _isProcessing = false;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 24),
-                    _buildActionButton(
-                      icon: Icons.chat_bubble_outline,
-                      label: '${post.commentsCount} Comments',
-                      color: Colors.grey[700],
-                      onPressed: () => _showAddCommentModal(post.id),
-                    ),
-                  ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: Icon(
+                    _likedPosts.contains(post.id)
+                        ? Icons.favorite
+                        : Icons.favorite_border,
+                    color: _likedPosts.contains(post.id) ? Colors.red : null,
+                  ),
+                  onPressed: () async {
+                    // Gọi hàm xử lý Like/Unlike tại đây
+                  },
                 ),
-              ),
-            ],
+                Text('${post.likesCount} Likes'),
+                const SizedBox(width: 16),
+                IconButton(
+                  icon: const Icon(Icons.comment),
+                  onPressed: () {
+                    _showAddCommentModal(post.id);
+                  },
+                ),
+                Text('${post.commentsCount} Comments'),
+              ],
+            ),
+
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    Color? color,
-    required VoidCallback onPressed,
-  }) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: color),
-            SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  String _formatDate(String isoDate) {
+    final date = DateTime.parse(isoDate);
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute}';
   }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }}
->>>>>>> Stashed changes
+}

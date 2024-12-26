@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
-import 'video_screen.dart';  // Import VideoScreen
+import 'video_screen.dart';
+import 'notifications_screen.dart';
 import 'account_screen.dart';
 import 'market_screen.dart';
 
@@ -8,74 +9,60 @@ class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
   @override
-  _MainScreenState createState() => _MainScreenState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<String> _videoAssets = [
-    'assets/sample_video.mp4',
-    'assets/sample_video.mp4',
-    'assets/sample_video.mp4',
-    'assets/sample_video.mp4',
-  ];
-
-  // List of screens (you might need to modify this based on your logic)
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    // Modify this to use VideoScreen and pass a video asset
-    const VideoScreen(videoAsset: 'assets/sample_video.mp4'),
-    const AccountScreen(),
-    const MarketScreen(),
-  ];
-
-  // Custom function to change the active and inactive colors for the BottomNavigationBar
-  Color _getIconColor(int index) {
-    return _currentIndex == index ? Colors.blue : Colors.grey;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Main Screen'),
+      body: _currentIndex == 4
+          ? MarketScreen() // Tải lại MarketScreen khi bấm vào tab
+          : IndexedStack(
+        index: _currentIndex,
+        children: const [
+          HomeScreen(),
+          VideoListScreen(),
+          NotificationsScreen(),
+          AccountScreen(),
+        ],
       ),
-      body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
             _currentIndex = index;
-            if (index == 1) {  // If Video Screen is tapped, set the right video asset
-              // Use a sample asset or a dynamic asset depending on your logic
-              _screens[1] = VideoScreen(videoAsset: _videoAssets[index]);
-            }
           });
         },
-        items: [
+        type: BottomNavigationBarType.fixed,
+        items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home, color: _getIconColor(0)),
+            icon: Icon(Icons.home),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.video_library, color: _getIconColor(1)),
+            icon: Icon(Icons.video_library),
             label: 'Video',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle, color: _getIconColor(2)),
+            icon: Icon(Icons.notifications),
+            label: 'Notifications',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle),
             label: 'Account',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart, color: _getIconColor(3)),
+            icon: Icon(Icons.shopping_cart),
             label: 'Market',
           ),
         ],
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: Colors.blue,
+        selectedItemColor: Colors.blueAccent,
         unselectedItemColor: Colors.grey,
-        elevation: 10,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
       ),
     );
   }
