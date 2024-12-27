@@ -5,21 +5,21 @@ import '../env.dart';
 import '../models/post_model.dart';
 
 
-  // Lấy danh sách bài viết
-  Future<List<Post>> fetchPosts() async {
-    try {
-      final response = await http.get(Uri.parse('${Env.baseUrl}/posts'));
+// Lấy danh sách bài viết
+Future<List<Post>> fetchPosts() async {
+  try {
+    final response = await http.get(Uri.parse('${Env.baseUrl}/posts'));
 
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        return data.map((json) => Post.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load posts');
-      }
-    } catch (e) {
-      throw Exception('Error connecting to the server: $e');
+    if (response.statusCode == 200) {
+      List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Post.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load posts');
     }
+  } catch (e) {
+    throw Exception('Error connecting to the server: $e');
   }
+}
 Future<void> createPost(Post post) async {
   final url = Uri.parse('${Env.baseUrl}/posts');
 

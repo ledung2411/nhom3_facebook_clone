@@ -27,7 +27,7 @@ class AccountScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundImage: const AssetImage('assets/minhtu.jpg'), // Thay ảnh đại diện
+                    backgroundImage: const AssetImage('assets/thanhtu.jpg'), // Thay ảnh đại diện
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -35,7 +35,7 @@ class AccountScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
                         Text(
-                          "Nguyễn Minh Tú",
+                          "Phạm Thanh Tú",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
