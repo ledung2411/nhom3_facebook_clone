@@ -1,10 +1,125 @@
-// Import cả 2 service với alias
-import '../api/api_client.dart';
-import '../service/auth_service.dart';
+import 'dart:convert';
+import 'package:bt_nhom3/env.dart';
+import 'package:bt_nhom3/api/api_client.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter/material.dart';
-import 'admin_screen.dart';
-import 'main_screen.dart';
-import 'register_screen.dart';
+import 'package:bt_nhom3/screens/admin_screen.dart';
+import 'package:bt_nhom3/screens/main_screen.dart';
+import 'package:bt_nhom3/screens/register_screen.dart';
+
+class AuthService {
+  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
+
+  Future<Map<String, dynamic>> login(String username, String password) async {
+    try {
+      final response = await http.post(
+        Uri.parse("${Env.baseUrl}/Authenticate/login"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "username": username,
+          "password": password,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (!data['status']) {
+          return {"success": false, "message": data['message']};
+        }
+
+        // Lưu Token
+        String token = data['token'];
+        await secureStorage.write(key: 'jwt_token', value: token);
+
+        // Giải mã Token
+        Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+
+        return {
+          "success": true,
+          "token": token,
+          "decodedToken": decodedToken,
+        };
+      } else {
+        return {
+          "success": false,
+          "message": "Lỗi HTTP: ${response.statusCode}",
+        };
+      }
+    } catch (e) {
+      return {
+        "success": false,
+        "message": "Lỗi kết nối: $e",
+      };
+    }
+  }
+
+  Future<String?> getToken() async {
+    try {
+      return await secureStorage.read(key: 'jwt_token');
+    } catch (e) {
+      print("Lỗi đọc token: $e");
+      return null;
+    }
+  }
+
+  Future<void> logout() async {
+    await secureStorage.delete(key: 'jwt_token');
+  }
+}
+
+
+class Auth {
+  static final AuthService _authService = AuthService();
+  static final ApiClient _apiClient = ApiClient();
+
+  /// Login method using [AuthService]
+  static Future<Map<String, dynamic>> login(String username, String password) async {
+    var result = await _authService.login(username, password);
+    return result; // returns a map with {success: bool, token: string?, role: string?, message: string?}
+  }
+
+  /// Register a new account
+  static Future<Map<String, dynamic>> register({
+    required String username,
+    required String email,
+    required String password,
+    required String initials,
+    required String role,
+  }) async {
+    // Create request body
+    Map<String, dynamic> body = {
+      "username": username,
+      "email": email,
+      "password": password,
+      "initials": initials,
+      "role": role,
+    };
+
+    // Call API to register via ApiClient
+    try {
+      var response = await _apiClient.post('/Authenticate/register', body: body);
+
+      // Handle API response
+      if (response.statusCode == 200) {
+        var result = jsonDecode(response.body);
+        return result;
+      } else {
+        return {
+          'success': false,
+          'message': 'Registration failed, please try again.',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Connection error: ${e.toString()}',
+      };
+    }
+  }
+}
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,16 +137,28 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _checkToken();
+    _checkToken(); // Check token and navigate to the correct screen on app load
   }
 
+  // Check token and role from SecureStorage
   Future<void> _checkToken() async {
-    final authState = await AuthService.checkAuthState();
+    final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
-    if (authState['isAuthenticated'] == true) {
-      if (!mounted) return;
+    try {
+      String? token = await secureStorage.read(key: 'jwt_token');
+      if (token == null || token.isEmpty) {
+        print("Token không tồn tại hoặc rỗng.");
+        return;
+      }
 
-      if (authState['role'] == 'admin') {
+      // Giải mã Token
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      print("Token đã giải mã: $decodedToken");
+
+      String role = decodedToken['role']?.toLowerCase() ?? 'user';
+
+      // Điều hướng dựa trên vai trò
+      if (role == 'admin') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const AdminScreen()),
@@ -42,8 +169,11 @@ class _LoginScreenState extends State<LoginScreen> {
           MaterialPageRoute(builder: (context) => const MainScreen()),
         );
       }
+    } catch (e) {
+      print("Lỗi trong quá trình kiểm tra token: $e");
     }
   }
+
 
   Future<void> _handleLogin() async {
     if (_usernameController.text.isEmpty || _passwordController.text.isEmpty) {
@@ -58,78 +188,56 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    try {
-      // Get device info for Smart Auth
-      final deviceInfo = await AuthService.getDeviceInfo();
+    final result = await Auth.login(
+      _usernameController.text,
+      _passwordController.text,
+    );
 
-      // Sử dụng Auth class từ api_client.dart
-      final result = await Auth.login(
-        _usernameController.text,
-        _passwordController.text,
-      );
+    setState(() => _isLoading = false);
 
-      if (result['success'] == true && result['token'] != null) {
-        // Validate login attempt with Smart Auth
-        final isValidAttempt = await AuthService.validateLoginAttempt(
-          username: _usernameController.text,
-          deviceId: deviceInfo['deviceId'],
-          ipAddress: deviceInfo['ipAddress'],
-        );
+    if (result['success'] == true) {
+      // Lưu Token
+      String token = result['token'];
+      Map<String, dynamic> decodedToken = result['decodedToken'];
 
-        if (!isValidAttempt) {
-          setState(() => _isLoading = false);
-          if (!mounted) return;
+      // Kiểm tra giá trị của role
+      var roleField = decodedToken['role'];
+      String role;
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Đăng nhập không được phép từ thiết bị này'),
-              backgroundColor: Colors.red,
-            ),
-          );
-          return;
-        }
-
-        // Save auth data using AuthService from services/auth_service.dart
-        await AuthService.saveAuthData(result['token']);
-        final role = await AuthService.getUserRole();
-
-        setState(() => _isLoading = false);
-        if (!mounted) return;
-
-        if (role == 'admin') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const AdminScreen()),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MainScreen()),
-          );
-        }
+      if (roleField is String) {
+        role = roleField.toLowerCase(); // Nếu role là chuỗi
+      } else if (roleField is List) {
+        role = roleField.isNotEmpty ? roleField[0].toString().toLowerCase() : 'user';
       } else {
-        setState(() => _isLoading = false);
-        if (!mounted) return;
+        role = 'user'; // Giá trị mặc định nếu không xác định được role
+      }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Đăng nhập thất bại'),
-            backgroundColor: Colors.red,
-          ),
+      print('Role xác định: $role');
+
+      // Điều hướng dựa trên vai trò
+      if (role == 'admin') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const AdminScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
         );
       }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (!mounted) return;
-
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lỗi: $e'),
+          content: Text(result['message'] ?? 'Tên đăng nhập hoặc mật khẩu không đúng'),
           backgroundColor: Colors.red,
         ),
       );
     }
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -199,7 +307,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 SizedBox(
                   height: 50,
-                  width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(
@@ -254,3 +361,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
