@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:bt_nhom3/env.dart';
-import 'package:bt_nhom3/api/api_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -88,56 +87,6 @@ class AuthService {
     } catch (e) {
       // Handle storage deletion errors
       rethrow;
-    }
-  }
-}
-
-class Auth {
-  static final AuthService _authService = AuthService();
-  static final ApiClient _apiClient = ApiClient();
-
-  /// Login method using [AuthService]
-  static Future<Map<String, dynamic>> login(String username, String password) async {
-    var result = await _authService.login(username, password);
-    return result; // returns a map with {success: bool, token: string?, role: string?, message: string?}
-  }
-
-  /// Register a new account
-  static Future<Map<String, dynamic>> register({
-    required String username,
-    required String email,
-    required String password,
-    required String initials,
-    required String role,
-  }) async {
-    // Create request body
-    Map<String, dynamic> body = {
-      "username": username,
-      "email": email,
-      "password": password,
-      "initials": initials,
-      "role": role,
-    };
-
-    // Call API to register via ApiClient
-    try {
-      var response = await _apiClient.post('/Authenticate/register', body: body);
-
-      // Handle API response
-      if (response.statusCode == 200) {
-        var result = jsonDecode(response.body);
-        return result;
-      } else {
-        return {
-          'success': false,
-          'message': 'Registration failed, please try again.',
-        };
-      }
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Connection error: ${e.toString()}',
-      };
     }
   }
 }
